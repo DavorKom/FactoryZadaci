@@ -23,7 +23,7 @@ class QueryBuilder {
     }
 
     public function insert($table, $parameters)
-    {
+    {   
         $sql = sprintf(
 
             'insert into %s (%s) values (%s)',
@@ -42,6 +42,8 @@ class QueryBuilder {
 
             $statement->execute($parameters);
 
+            return $this->pdo->lastInsertId();
+
         } catch (Exception $e) {
 
             die("Exception!");
@@ -51,7 +53,6 @@ class QueryBuilder {
 
     public function update($table, $parameters, $whereParameters)
     {
-
         $counter = 1;
 
         $sql = sprintf(

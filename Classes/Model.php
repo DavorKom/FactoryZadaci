@@ -1,6 +1,10 @@
 <?php
 
+require "Traits/Observer.php";
+
 class Model {
+
+    use Observer;
 
     protected $attributes = [];
 
@@ -10,10 +14,20 @@ class Model {
 
     protected $hidden = [];
 
-    protected static $query;
+    protected $timestamps = true;
+
+    protected $autoIncrement = true;
+
+    protected $primaryKey = 'id';
+
+    protected $tableName = null;
+
+    protected $exists = false;
+
+    public static $query;
 
     public static function setDBQueryBuilder($queryBuilder) 
-    {
+    {   
         static::$query = $queryBuilder;
     }
 
@@ -103,13 +117,6 @@ class Model {
     
     }
 
-    public function databaseOriginal()
-    {
-        //fakeam povlačenje iz baze i postavljam $orignal
-        $this->original = $this->attributes;
-
-    }
-
     protected function isDirty($attributeKey)
     {
         return $this->attributes[$attributeKey] !== $this->original[$attributeKey];
@@ -118,6 +125,8 @@ class Model {
     protected function dirtyFields($attributes)
     {
         $dirtyFields = [];
+
+        unset($attributes['created_at'], $attributes['updated_at']);
 
         foreach($attributes as $attributeKey => $attribute)
         {
@@ -131,25 +140,67 @@ class Model {
 
     }
 
-    public function update(Array $updated)
+    public function update(Array $parameters = [])
     {
+        $dirtyFields = [];
 
-        foreach($updated as $updateKey => $update)
+        foreach($parameters as $parameterKey => $parameter)
         {   
-            $dirtyFields = [];
-
-            if($this->attirbutes[$updateKey] !== $updated[$updateKey])
+            if($this->attirbutes[$parameterKey] !== $parameter)
             {   
-                $this->attributes[$updateKey] = $updated[$updateKey];
+                $this->$parameterKey = $parameter;
             }
 
         }
 
         $dirtyFields = $this->dirtyFields($this->attributes);
 
-        die(var_dump($dirtyFields));
+        if(empty($dirtyFields))
+        {   
+            return;
+        }
+
+        $datetime = date('H:i d.m.Y');
+        $parameters += ['updated_at' => $datetime];
+
+        static::$query->update($this->tableName, $dirtyFields, [$this->primaryKey => $this->attributes[$this->primaryKey]]);
+
+        $this->original = $this->attributes;
 
     }
 
+    public function fill(Array $parameters = [])
+    {   
+        foreach($parameters as $parameterKey => $parameter)
+        {   
+            $this->$parameterKey = $parameter;
+        }
+
+    }
+
+    public function save()
+    {   
+        if($this->exists)
+        {   
+            $this->update($this->attributes);
+        }
+
+        if($this->timestamps)
+        {
+            $datetime = date('H:i d.m.Y');
+            $this->attributes += ['created_at' => $datetime, 'updated_at' => $datetime];
+        }
+
+        $insertedId = static::$query->insert($this->tableName, $this->attributes);
+
+        $this->triger('created');
+
+        $this->exists = true;
+
+        if($insertedId != "0") {
+            $this->attributes[$this->primaryKey] = $insertedId;
+        }
+
+    }
 
 }

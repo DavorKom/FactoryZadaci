@@ -6,13 +6,17 @@ class User extends Model {
 
     protected $hidden = ['password'];
 
+    protected $tableName = 'Users';
+
+    protected $autoIncrement = false;
+
     public function getFullName()
     {
         return $this->firstName . ' ' . $this->lastName;
     }
 
     public function getPassword()
-    {
+    {   
         return $this->attributes['password'];
     }
 
@@ -26,7 +30,7 @@ class User extends Model {
     }
 
     public function setPassword($attributeValue)
-    {
+    {   
         $this->attributes['password'] = $attributeValue;
     }
 
