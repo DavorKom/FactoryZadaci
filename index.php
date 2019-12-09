@@ -1,12 +1,14 @@
 <?php 
 
-require 'Classes/Model.php';
-require 'Classes/User.php';
-require 'Classes/Post.php';
+require 'Models/Model.php';
+require 'Models/User.php';
+require 'Models/Post.php';
+require 'Controllers/Controller.php';
 require 'Database/Database.php';
 require 'Database/QueryBuilder.php';
 require 'Observers/UserObserver.php';
-
+require 'Route.php';
+require 'Router.php';
 
 $pdo = Database::connect();
 
@@ -14,21 +16,18 @@ $query = QueryBuilder::getInstance($pdo);
 
 Model::setDBQueryBuilder($query);
 
-$user = new User();
 
-$userObserver = new UserObserver;
 
-$user::observe($userObserver);
+$router = new Router;
 
-$user->fill([
-    'firstName' => 'test',
-    'lastName' => 'testovi',
-    'id' => 'test1'
-]);
+require 'Routes.php';
 
-$user->save();
+$router->direct('test');
 
-die(var_dump($user::$observers));
+die(var_dump($router->routes));
+
+
+
 
 
 
